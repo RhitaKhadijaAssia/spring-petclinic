@@ -21,12 +21,14 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                echo "started pipeline"
                 git branch: 'main', url: 'https://github.com/RhitaKhadijaAssia/spring-petclinic'
             }
         }
 
         stage('Build & Unit Tests') {
             steps {
+                echo "started building"
                 dir('.') {
                     sh ''' 
                         echo "JAVA_HOME=$JAVA_HOME"
@@ -36,7 +38,6 @@ pipeline {
                 }
             }
             post {
-                
                 always {
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
@@ -47,6 +48,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+                echo "sonarqube"
                 dir('.') {   // <-- use root directory
                     withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN')]) {
                         sh """./mvnw sonar:sonar \
@@ -63,6 +65,7 @@ pipeline {
 
         stage('Build Docker on remote machine') {
             steps {
+                echo "docker image"
                 dir('backend') {
                     sh "docker -H ${DOCKER_HOST} build -t ${IMAGE}:${TAG} ."
                 }
@@ -71,6 +74,7 @@ pipeline {
 
         stage('Run Docker on remote machine') {
             steps {
+                echo "run docker"
                 sh """
                     docker -H ${DOCKER_HOST} stop ${IMAGE} || true
                     docker -H ${DOCKER_HOST} rm ${IMAGE} || true
