@@ -11,7 +11,7 @@ pipeline {
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
         SONAR_TOKEN = credentials('01')
         SONAR_HOST  = 'https://sonarcloud.io'
-        IMAGE       = 'spring-petclinic'
+        IMAGE       = 'my-java-app'
         TAG         = 'latest'
         DOCKER_HOST = "tcp://10.52.81.17:2375"   
         
@@ -61,7 +61,7 @@ pipeline {
         }
 
 
-        /***stage('Build Docker on remote machine') {
+        stage('Build Docker on remote machine') {
             steps {
                 dir('backend') {
                     sh "docker -H ${DOCKER_HOST} build -t ${IMAGE}:${TAG} ."
@@ -77,7 +77,7 @@ pipeline {
                     docker -H ${DOCKER_HOST} run -d -p 8080:8080 --name ${IMAGE} ${IMAGE}:${TAG}
                 """
             }
-        }**/
+        }
     }
 
     post {
