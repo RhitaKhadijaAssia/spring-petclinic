@@ -14,21 +14,19 @@ pipeline {
         IMAGE       = 'my-java-app'
         TAG         = 'latest'
         DOCKER_HOST = "tcp://10.52.81.17:2375"   
-        
+    
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo "started pipeline"
                 git branch: 'main', url: 'https://github.com/RhitaKhadijaAssia/spring-petclinic'
             }
         }
 
         stage('Build & Unit Tests') {
             steps {
-                echo "started building"
                 dir('.') {
                     sh ''' 
                         echo "JAVA_HOME=$JAVA_HOME"
@@ -48,7 +46,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                echo "sonarqube"
                 dir('.') {   // <-- use root directory
                     withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN')]) {
                         sh """./mvnw sonar:sonar \
@@ -65,16 +62,22 @@ pipeline {
 
         stage('Build Docker on remote machine') {
             steps {
-                echo "docker image"
                 dir('backend') {
                     sh "docker -H ${DOCKER_HOST} build -t ${IMAGE}:${TAG} ."
                 }
             }
         }
 
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-creds']) {
+                    sh "docker -H ${DOCKER_HOST} push ${IMAGE}:${TAG}"
+                }
+            }
+        }
+
         stage('Run Docker on remote machine') {
             steps {
-                echo "run docker"
                 sh """
                     docker -H ${DOCKER_HOST} stop ${IMAGE} || true
                     docker -H ${DOCKER_HOST} rm ${IMAGE} || true
