@@ -11,11 +11,8 @@ pipeline {
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
         SONAR_TOKEN = credentials('01')
         SONAR_HOST  = 'https://sonarcloud.io'
-<<<<<<< HEAD
-        IMAGE       = 'lilitaa/my-java-app'
-=======
+
         IMAGE       = 'my-java-app'
->>>>>>> 20693853e8cb35517ebbff15cd720840fe91a7f0
         TAG         = 'latest'
         DOCKER_HOST = "tcp://10.52.81.17:2375"   
     
