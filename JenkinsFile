@@ -11,10 +11,14 @@ pipeline {
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
         SONAR_TOKEN = credentials('01')
         SONAR_HOST  = 'https://sonarcloud.io'
+<<<<<<< HEAD
         IMAGE       = 'lilitaa/my-java-app'
+=======
+        IMAGE       = 'my-java-app'
+>>>>>>> 20693853e8cb35517ebbff15cd720840fe91a7f0
         TAG         = 'latest'
         DOCKER_HOST = "tcp://10.52.81.17:2375"   
-        
+    
     }
     
     stages {
@@ -36,7 +40,6 @@ pipeline {
                 }
             }
             post {
-                
                 always {
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
@@ -65,6 +68,14 @@ pipeline {
             steps {
                 dir('backend') {
                     sh "docker -H ${DOCKER_HOST} build -t ${IMAGE}:${TAG} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-creds']) {
+                    sh "docker -H ${DOCKER_HOST} push ${IMAGE}:${TAG}"
                 }
             }
         }
