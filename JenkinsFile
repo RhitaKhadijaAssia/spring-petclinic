@@ -48,7 +48,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir('.') {   // <-- use root directory
-                    withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN')]) {
+                    withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN',url: 'https://index.docker.io/v1/')]) {
                         sh """./mvnw sonar:sonar \
                             -Dsonar.projectKey=RhitaKhadijaAssia_spring-petclinic \
                             -Dsonar.organization=rhitakhadijaassia \
