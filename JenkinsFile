@@ -58,6 +58,7 @@ pipeline {
             steps {
                 sh 'docker version'
                 sh 'docker info'
+                sh 'docker pull testcontainers/ryuk:0.13.0'
             }
         }
 
