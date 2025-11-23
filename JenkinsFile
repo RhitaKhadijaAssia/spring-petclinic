@@ -9,7 +9,8 @@ pipeline {
     environment {
         JAVA_HOME = '/Users/mac/Library/Java/JavaVirtualMachines/ms-17.0.16/Contents/Home'
         PATH = "${JAVA_HOME}/bin:/Applications/Docker.app/Contents/Resources/bin:${env.PATH}"
-        SONAR_TOKEN = credentials('01')
+
+        // Do NOT access secrets here — only inside withCredentials
         SONAR_HOST  = 'https://sonarcloud.io'
 
         IMAGE       = 'my-java-app'
@@ -26,13 +27,11 @@ pipeline {
 
         stage('Build & Unit Tests') {
             steps {
-                dir('.') {
-                    sh ''' 
-                        echo "JAVA_HOME=$JAVA_HOME"
-                        java -version
-                        ./mvnw -B -U clean verify -Dspring-javaformat.skip
-                    '''
-                }
+                sh '''
+                    echo "JAVA_HOME=$JAVA_HOME"
+                    java -version
+                    ./mvnw -B -U clean verify -Dspring-javaformat.skip
+                '''
             }
             post {
                 always {
@@ -44,23 +43,21 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                dir('.') {
-                    withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN')]) {
-                        sh """./mvnw sonar:sonar \
-                            -Dsonar.projectKey=RhitaKhadijaAssia_spring-petclinic \
-                            -Dsonar.organization=rhitakhadijaassia \
-                            -Dsonar.host.url=${SONAR_HOST} \
-                            -Dsonar.login=${SONAR_TOKEN}"""
-                    }
+                withCredentials([string(credentialsId: '01', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                          -Dsonar.projectKey=RhitaKhadijaAssia_spring-petclinic \
+                          -Dsonar.organization=rhitakhadijaassia \
+                          -Dsonar.host.url=https://sonarcloud.io \
+                          -Dsonar.login=$SONAR_TOKEN
+                    '''
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                dir('.') {
-                    sh 'docker build -t ${IMAGE}:${TAG} .'
-                }
+                sh 'docker build -t ${IMAGE}:${TAG} .'
             }
         }
 
