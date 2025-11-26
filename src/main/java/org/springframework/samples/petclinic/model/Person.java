@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
 @MappedSuperclass
 public class Person extends BaseEntity {
 
-	@Column(name = "first_name i made changed here to check if the build will work")
+	@Column(name = "first_name")
 	@NotBlank
 	private @Nullable String firstName;
 
