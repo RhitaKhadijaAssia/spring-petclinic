@@ -1,7 +1,21 @@
+/*
+ * Copyright 2012-2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.samples.petclinic.owner;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,11 +31,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Simple JavaBean domain object representing an owner.
+ *
+ * @author Ken Krebs
+ * @author Juergen Hoeller
+ * @author Sam Brannen
+ * @author Michael Isvy
+ * @author Oliver Drotbohm
+ * @author Wick Dynex
  */
 @Entity
 @Table(name = "owners")
@@ -29,115 +51,187 @@ public class Owner extends Person {
 
 	@Column(name = "address")
 	@NotBlank
-	private String address = " ";
+	private @Nullable String address;
 
 	@Column(name = "city")
 	@NotBlank
-	private String city = " ";
+	private @Nullable String city;
 
 	@Column(name = "telephone")
 	@NotBlank
 	@Pattern(regexp = "\\d{10}", message = "{telephone.invalid}")
-	private String telephone = " ";
+	private @Nullable String telephone;
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "owner_id")
 	@OrderBy("name")
 	private final List<Pet> pets = new ArrayList<>();
 
-	/* ===================== Getters & Setters ===================== */
-
-	public String getAddress() {
+	public @Nullable String getAddress() {
 		return this.address;
 	}
 
-	public void setAddress(String address) {
+	public void setAddress(@Nullable String address) {
 		this.address = address;
 	}
 
-	public String getCity() {
+	public @Nullable String getCity() {
 		return this.city;
 	}
 
-	public void setCity(String city) {
+	public void setCity(@Nullable String city) {
 		this.city = city;
 	}
 
-	public String getTelephone() {
+	public @Nullable String getTelephone() {
 		return this.telephone;
 	}
 
-	public void setTelephone(String telephone) {
+	public void setTelephone(@Nullable String telephone) {
 		this.telephone = telephone;
 	}
 
-	/**
-	 * Returns an unmodifiable view of pets to preserve encapsulation.
-	 */
 	public List<Pet> getPets() {
-		return Collections.unmodifiableList(this.pets);
+		return this.pets;
 	}
 
 	public void addPet(Pet pet) {
-		Assert.notNull(pet, "Pet must not be null");
 		if (pet.isNew()) {
-			this.pets.add(pet);
+			getPets().add(pet);
 		}
 	}
 
-	/* ===================== Pet Lookup ===================== */
-
-	public Pet getPet(String name) {
+	/**
+	 * Return the Pet with the given name, or null if none found for this Owner.
+	 * @param name to test
+	 * @return the Pet with the given name, or null if no such Pet exists for this Owner
+	 */
+	public @Nullable Pet getPet(String name) {
 		return getPet(name, false);
 	}
 
-	public Pet getPet(Integer id) {
-		for (Pet pet : pets) {
-			if (!pet.isNew() && Objects.equals(pet.getId(), id)) {
-				return pet;
+	/**
+	 * Return the Pet with the given id, or null if none found for this Owner.
+	 * @param id to test
+	 * @return the Pet with the given id, or null if no such Pet exists for this Owner
+	 */
+	public @Nullable Pet getPet(Integer id) {
+		for (Pet pet : getPets()) {
+			if (!pet.isNew()) {
+				Integer compId = pet.getId();
+				if (Objects.equals(compId, id)) {
+					return pet;
+				}
 			}
 		}
 		return null;
 	}
-
-	public Pet getPet(String name, boolean ignoreNew) {
-		for (Pet pet : pets) {
-			if (pet.getName() != null
-					&& pet.getName().equalsIgnoreCase(name)
-					&& (!ignoreNew || !pet.isNew())) {
-				return pet;
-			}
-		}
-		return null;
-	}
-
-	/* ===================== Visits ===================== */
 
 	/**
-	 * Adds a visit to a pet.
+	 * Return the Pet with the given name, or null if none found for this Owner.
+	 * @param name to test
+	 * @param ignoreNew whether to ignore new pets (pets that are not saved yet)
+	 * @return the Pet with the given name, or null if no such Pet exists for this Owner
+	 */
+	public @Nullable Pet getPet(String name, boolean ignoreNew) {
+		for (Pet pet : getPets()) {
+			String compName = pet.getName();
+			if (compName != null && compName.equalsIgnoreCase(name) && (!ignoreNew || !pet.isNew()) ) {
+					return pet;
+			}
+		}
+		return null;
+	}
+	public void complicatedMethod() {
+		// Long useless logic
+		for (int i = 0; i < 100; i++) {
+			System.out.println("Do something...");
+		}
+	}
+
+
+	@Override
+	public String toString() {
+		return new ToStringCreator(this).append("id", this.getId())
+			.append("new", this.isNew())
+			.append("lastName", this.getLastName())
+			.append("firstName", this.getFirstName())
+			.append("address", this.address)
+			.append("city", this.city)
+			.append("telephone", this.telephone)
+			.toString();
+	}
+
+	/**
+	 * Adds the given {@link Visit} to the {@link Pet} with the given identifier.
+	 * @param petId the identifier of the {@link Pet}, must not be {@literal null}.
+	 * @param visit the visit to add, must not be {@literal null}.
 	 */
 	public void addVisit(Integer petId, Visit visit) {
-		Assert.notNull(petId, "Pet identifier must not be null");
-		Assert.notNull(visit, "Visit must not be null");
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
 
 		Pet pet = getPet(petId);
-		Assert.notNull(pet, "Invalid Pet identifier");
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
 
 		pet.addVisit(visit);
 	}
 
-	/* ===================== Object Methods ===================== */
+	public void addVisit2(Integer petId, Visit visit) {
 
-	@Override
-	public String toString() {
-		return new ToStringCreator(this)
-				.append("id", getId())
-				.append("new", isNew())
-				.append("lastName", getLastName())
-				.append("firstName", getFirstName())
-				.append("address", address)
-				.append("city", city)
-				.append("telephone", telephone)
-				.toString();
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
+
+		Pet pet = getPet(petId);
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
+
+		pet.addVisit(visit);
 	}
+	public void addVisit5(Integer petId, Visit visit) {
+
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
+
+		Pet pet = getPet(petId);
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
+
+		pet.addVisit(visit);
+	}
+	public void addVisit1(Integer petId, Visit visit) {
+
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
+
+		Pet pet = getPet(petId);
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
+
+		pet.addVisit(visit);
+	}
+	public void addVisit3(Integer petId, Visit visit) {
+
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
+
+		Pet pet = getPet(petId);
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
+
+		pet.addVisit(visit);
+	}
+	public void addVisit4(Integer petId, Visit visit) {
+
+		Assert.notNull(petId, "Pet identifier must not be null!");
+		Assert.notNull(visit, "Visit must not be null!");
+
+		Pet pet = getPet(petId);
+
+		Assert.notNull(pet, "Invalid Pet identifier!");
+
+		pet.addVisit(visit);
+	}
+
 }
