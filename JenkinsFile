@@ -26,6 +26,9 @@ pipeline {
         }
 
         stage('Build & Unit Tests') {
+            //clean → supprime les anciens builds
+
+            //verify → compile + lance les tests unitaires
             steps {
                 sh '''
                     echo "JAVA_HOME=$JAVA_HOME"
@@ -34,7 +37,9 @@ pipeline {
                 '''
             }
             post {
+                // Toujours exécuté, même si le build échoue 
                 always {
+                    //junit Publie les résultats des tests Les affiche dans Jenkins
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
