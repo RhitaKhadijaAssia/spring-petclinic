@@ -29,16 +29,16 @@ public class Owner extends Person {
 
 	@Column(name = "address")
 	@NotBlank
-	private String address;
+	private String address = " ";
 
 	@Column(name = "city")
 	@NotBlank
-	private String city;
+	private String city = " ";
 
 	@Column(name = "telephone")
 	@NotBlank
 	@Pattern(regexp = "\\d{10}", message = "{telephone.invalid}")
-	private String telephone;
+	private String telephone = " ";
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id")
